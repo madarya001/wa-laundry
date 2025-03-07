@@ -6,6 +6,8 @@
     <title>WhatsApp Bot</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+
     <script>
         async function checkConnection() {
             const response = await fetch('/status');
@@ -17,8 +19,10 @@
                     <div class="text-center">
                         <h2 class="text-2xl font-semibold text-green-500 animate-pulse">✅ Bot Terhubung!</h2>
                         <button onclick="logout()" class="mt-4 px-5 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">Disconnect</button>
+                        <div id="docs" class="mt-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-md text-left"></div>
                     </div>
                 `;
+                loadDocs();
             } else {
                 getQRCode();
             }
@@ -46,6 +50,60 @@
             await fetch('/logout');
             alert("Berhasil Logout!");
             location.reload();
+        }
+
+        function loadDocs() {
+            const markdownContent = `
+# 📖 Dokumentasi WhatsApp Bot
+
+## 🚀 Fitur Utama
+- **Kirim Pesan**: Bisa mengirim teks, gambar, dan dokumen
+- **QR Code Login**: Scan QR untuk masuk ke WhatsApp Web
+- **Otomatis Reconnect**: Jika bot terputus, QR akan muncul kembali
+
+## 🔧 API Endpoints
+### 🔹 **Cek Status Bot**
+\`\`\`
+GET /status
+\`\`\`
+**Response**:
+\`\`\`json
+{ "connected": true }
+\`\`\`
+
+### 🔹 **Dapatkan QR Code**
+\`\`\`
+GET /get-qr
+\`\`\`
+**Response**:
+\`\`\`json
+{ "qr": "data:image/png;base64,..." }
+\`\`\`
+
+### 🔹 **Kirim Pesan**
+\`\`\`
+POST /send-message
+\`\`\`
+**Body**:
+\`\`\`json
+{
+  "number": "6281234567890",
+  "message": "Halo dari bot!"
+}
+\`\`\`
+
+### 🔹 **Logout**
+\`\`\`
+GET /logout
+\`\`\`
+**Response**:
+\`\`\`json
+{ "status": true, "message": "Berhasil logout" }
+\`\`\`
+
+> **⚠ Catatan:** Pastikan nomor WhatsApp dalam format internasional (misal: 628xxx).
+            `;
+            document.getElementById('docs').innerHTML = marked.parse(markdownContent);
         }
 
         window.onload = checkConnection;
