@@ -6,7 +6,7 @@ const cors = require('cors');
 const app = express();
 app.use(express.json());
 app.use(cors());
-app.use(express.static('public'));
+app.use(express.static('public')); // Untuk menyajikan file statis (HTML, CSS, JS)
 
 let qrCodeData = null;
 let isConnected = false;
@@ -19,20 +19,29 @@ const client = new Client({
 
 // Generate QR Code jika belum login
 client.on('qr', async qr => {
-    qrCodeData = await qrcode.toDataURL(qr);
+    qrCodeData = await qrcode.toDataURL(qr); // Simpan QR Code dalam format base64
     isConnected = false;
 });
 
 // Jika sudah terhubung
 client.on('ready', () => {
     console.log('WhatsApp Bot siap digunakan!');
-    qrCodeData = null;
+    qrCodeData = null; // Hapus QR setelah login
     isConnected = true;
+});
+
+// Route untuk halaman utama
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/public/index.html');
 });
 
 // API untuk mendapatkan QR Code
 app.get('/get-qr', (req, res) => {
-    res.json({ status: !qrCodeData, qr: qrCodeData });
+    if (qrCodeData) {
+        res.json({ status: false, qr: qrCodeData });
+    } else {
+        res.json({ status: true });
+    }
 });
 
 // API untuk memeriksa status koneksi
@@ -47,11 +56,12 @@ app.get('/logout', async (req, res) => {
         isConnected = false;
         qrCodeData = null;
 
+        // Restart WhatsApp client setelah logout
         console.log("Restarting WhatsApp client...");
-        client.destroy();
+        client.destroy(); // Hancurkan instance lama
         setTimeout(() => {
-            client.initialize();
-        }, 3000);
+            client.initialize(); // Inisialisasi ulang
+        }, 3000); // Tunggu 3 detik sebelum restart
 
         res.json({ status: true, message: "Berhasil logout, QR akan muncul lagi dalam beberapa detik." });
     } catch (error) {
@@ -59,26 +69,17 @@ app.get('/logout', async (req, res) => {
     }
 });
 
-// API untuk mengirim pesan WhatsApp (text & media)
+// API untuk mengirim pesan WhatsApp
 app.post('/send-message', async (req, res) => {
-    const { number, message, mediaUrl } = req.body;
+    const { number, message } = req.body;
 
-    if (!number) {
-        return res.status(400).json({ status: false, message: 'Nomor WA harus diisi!' });
+    if (!number || !message) {
+        return res.status(400).json({ status: false, message: 'Nomor dan pesan harus diisi!' });
     }
 
     try {
-        const formattedNumber = number.includes('@c.us') ? number : `${number}@c.us`;
-
-        if (mediaUrl) {
-            // Kirim media (gambar/doc) + optional teks
-            const media = await MessageMedia.fromUrl(mediaUrl);
-            await client.sendMessage(formattedNumber, media, { caption: message || "" });
-        } else {
-            // Kirim hanya teks
-            await client.sendMessage(formattedNumber, message);
-        }
-
+        const formattedNumber = number.includes('@c.us') ? number : `${number}@c.us`; // Format nomor WA
+        await client.sendMessage(formattedNumber, message);
         res.json({ status: true, message: 'Pesan berhasil dikirim!' });
     } catch (error) {
         res.status(500).json({ status: false, message: 'Gagal mengirim pesan', error: error.message });
