@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WhatsApp Bot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
         async function checkConnection() {
             const response = await fetch('/status');
@@ -12,8 +14,10 @@
 
             if (data.connected) {
                 container.innerHTML = `
-                    <h2>Bot Terhubung!</h2>
-                    <button onclick="logout()">Disconnect</button>
+                    <div class="text-center">
+                        <h2 class="text-2xl font-semibold text-green-500 animate-pulse">✅ Bot Terhubung!</h2>
+                        <button onclick="logout()" class="mt-4 px-5 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">Disconnect</button>
+                    </div>
                 `;
             } else {
                 getQRCode();
@@ -26,8 +30,13 @@
             const container = document.getElementById('container');
 
             if (!data.status) {
-                container.innerHTML = `<img src="${data.qr}" alt="QR Code">`;
-                setTimeout(getQRCode, 5000); // Cek ulang QR setiap 5 detik
+                container.innerHTML = `
+                    <div class="flex flex-col items-center">
+                        <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300">Scan QR untuk masuk</h2>
+                        <img src="${data.qr}" alt="QR Code" class="mt-4 shadow-lg rounded-lg border p-2 animate-fadeIn">
+                    </div>
+                `;
+                setTimeout(getQRCode, 5000);
             } else {
                 checkConnection();
             }
@@ -42,9 +51,9 @@
         window.onload = checkConnection;
     </script>
 </head>
-<body>
-    <div id="container">
-        <h2>Loading...</h2>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 flex justify-center items-center min-h-screen">
+    <div id="container" class="p-6 bg-white dark:bg-gray-800 shadow-lg rounded-lg text-center animate-fadeIn">
+        <h2 class="text-lg font-semibold">Loading...</h2>
     </div>
 </body>
 </html>
